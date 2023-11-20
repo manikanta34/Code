@@ -1,0 +1,23 @@
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class ExtractFirstSubstring {
+    public static void main(String[] args) {
+        String input = "EthicPoint(EPT) - View/edit(IT)";
+
+        // Define a pattern for matching text inside parentheses
+        Pattern pattern = Pattern.compile("\\(([^)]+)\\)");
+
+        // Use a Matcher to find the pattern in the input string
+        Matcher matcher = pattern.matcher(input);
+
+        // Check if a match is found
+        if (matcher.find()) {
+            // Extract the content inside the first parentheses
+            String extractedValue = matcher.group(1);
+            System.out.println("Extracted value: " + extractedValue);
+        } else {
+            System.out.println("No match found.");
+        }
+    }
+}
