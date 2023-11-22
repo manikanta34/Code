@@ -1,0 +1,31 @@
+import java.util.*;
+
+public class MapMerger {
+    public static void main(String[] args) {
+        Map<String, Set<String>> map1 = new HashMap<>();
+        map1.put("key1", new HashSet<>(Arrays.asList("value1", "value2")));
+        map1.put("key2", new HashSet<>(Arrays.asList("value3")));
+
+        Map<String, Set<String>> map2 = new HashMap<>();
+        map2.put("key1", new HashSet<>(Arrays.asList("value4")));
+        map2.put("key3", new HashSet<>(Arrays.asList("value5")));
+
+        Map<String, Set<String>> mergedMap = mergeMaps(map1, map2);
+
+        // Print the merged map
+        mergedMap.forEach((key, value) ->
+                System.out.println(key + ": " + value));
+    }
+
+    private static Map<String, Set<String>> mergeMaps(Map<String, Set<String>> map1, Map<String, Set<String>> map2) {
+        Map<String, Set<String>> mergedMap = new HashMap<>(map1);
+
+        map2.forEach((key, value) ->
+                mergedMap.merge(key, value, (existingValue, newValue) -> {
+                    existingValue.addAll(newValue);
+                    return existingValue;
+                }));
+
+        return mergedMap;
+    }
+}
