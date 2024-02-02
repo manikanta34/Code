@@ -1,0 +1,105 @@
+private void setBundleInfoToTransDB() {
+    logger.debug("In Method setBundleInfoToTransDB");
+    Connection conn = getDBConnection();
+    PreparedStatement pstmt = null;
+    try {
+        conn.setAutoCommit(false); // Disable auto-commit to allow multiple statements
+        logger.debug("Fetching all IT roles");
+
+        // Clearing everything
+        Statement stmt = conn.createStatement();
+        stmt.execute("delete from NON_NERC_CUSTOM_TransactionDB.exelon_groups");
+        stmt.close(); // Manually closing the statement
+
+        String insertSQL = "INSERT INTO NON_NERC_CUSTOM_TransactionDB.exelon_groups (role_name, role_type, role_description) VALUES (?, 'it', ?)";
+        pstmt = conn.prepareStatement(insertSQL);
+
+        QueryOptions qo = new QueryOptions();
+        qo.addFilter(Filter.eq("type", "it"));
+        Iterator itr = context.search(Bundle.class, qo);
+        while (itr.hasNext()) {
+            Bundle itRole = itr.next();
+            String role_name = itRole.getName();
+            String role_description = itRole.getDescription("en_US");
+
+            pstmt.setString(1, role_name);
+            pstmt.setString(2, role_description);
+            pstmt.addBatch();
+        }
+        sailpoint.tools.Util.flushIterator(itr);
+
+        logger.debug("Execute the batch of statements");
+        pstmt.executeBatch(); // Execute the batch of statements
+        conn.commit(); // Commit the transaction
+    } catch (SQLException e) {
+        try {
+            if (conn != null) conn.rollback(); // Rollback the transaction on error
+        } catch (SQLException ex) {
+            logger.error("Issue while rolling back transaction", ex);
+        }
+        logger.error("Issue while writing role names and descriptions to transaction DB" + e);
+        e.printStackTrace();
+    } finally {
+        try {
+            if (pstmt != null) pstmt.close();
+            if (conn != null) conn.close();
+        } catch (SQLException ex) {
+            logger.error("Error closing resources", ex);
+        }
+    }
+}
+
+private void setIdBundleInfoToTransDB() {
+    logger.debug("In Method setIdBundleInfoToTransDB");
+    Connection conn = getDBConnection();
+    PreparedStatement pstmt = null;
+    try {
+        conn.setAutoCommit(false); // Disable auto-commit to allow multiple statements
+        logger.debug("Fetching role members");
+
+        // Clearing everything
+        Statement stmt = conn.createStatement();
+        stmt.execute("delete from NON_NERC_CUSTOM_TransactionDB.exelon_user");
+        stmt.close(); // Manually closing the statement
+
+        String insertSQL = "INSERT INTO NON_NERC_CUSTOM_TransactionDB.exelon_user (employee_id, role_name) VALUES (?, ?)";
+        pstmt = conn.prepareStatement(insertSQL);
+
+        QueryOptions qo = new QueryOptions();
+        qo.addFilter(Filter.and(Filter.or(Filter.notnull("bundleSummary"), Filter.notnull("assignedRoleSummary")), Filter.notnull("employeeId")));
+        Iterator itr = context.search(Identity.class, qo);
+        while (itr.hasNext()) {
+            Identity id = itr.next();
+            String employee_id = id.getName();
+            List<String> role_name_list = new ArrayList<>();
+            // Similar logic for detectedRoles and assignedRoles
+            // ...
+
+            logger.debug("employee_id : " + employee_id + " , role_name_list :" + role_name_list);
+
+            pstmt.setString(1, employee_id);
+            pstmt.setString(2, Util.listToCsv(role_name_list)); // Assuming Util.listToCsv handles list to CSV conversion
+            pstmt.addBatch();
+        }
+        Util.flushIterator(itr);
+
+        logger.debug("Execute the batch of statements");
+        pstmt.executeBatch(); // Execute the batch of statements
+        conn.commit(); // Commit the transaction
+    } catch (SQLException e) {
+        try {
+            if (conn != null) conn.rollback(); // Rollback the transaction on error
+        } catch (SQLException ex) {
+            logger.error("Issue while rolling back transaction", ex);
+        }
+        logger.error("Issue while writing role names and member names to transaction DB" + e);
+        e.printStackTrace();
+    } finally {
+        try {
+            if (pstmt != null) pstmt.close();
+            if (conn != null) conn.close();
+        } catch (SQLException ex) {
+            logger.error("Error closing resources", ex);
+        }
+    }
+}
