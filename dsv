@@ -1,0 +1,78 @@
+	//get all it role names and descriptions and write to transactional DB
+	private void setBundleInfoToTransDB(){
+		logger.debug("In Method setBundleInfoToTransDB");
+		Connection conn = getDBConnection();
+		conn.setAutoCommit(false); // Disable auto-commit to allow multiple statements
+		try{
+			logger.debug("Fetching all IT roles");
+			Statement stmt = conn.createStatement();
+			stmt.addBatch("delete from NON_NERC_CUSTOM_TransactionDB.exelon_groups"); //clearing everything
+			QueryOptions qo = new QueryOptions();
+			qo.addFilter(Filter.eq("type","it"));
+			Iterator itr = context.search(Bundle.class,qo);
+			while(itr.hasNext()){
+				Bundle itRole = itr.next();
+				String role_name = itRole.getName();
+				String role_description = itRole.getDescription("en_US");
+				stmt.addBatch("INSERT INTO NON_NERC_CUSTOM_TransactionDB.exelon_groups (role_name,role_type,role_description) VALUES ('"+role_name+"', 'it', '"+role_description+"')"); // Add each statement to the batch
+			}
+			sailpoint.tools.Util.flushIterator(itr);
+			logger.debug("Execute the batch of statements");
+			stmt.executeBatch(); // Execute the batch of statements
+			conn.commit(); // Commit the transaction
+
+		} catch (SQLException e) {
+			conn.rollback(); // Rollback the transaction on error
+			logger.error("Issue while writing role names and descriptions to transaction DB"+e);
+			e.printStackTrace();
+		}
+	}
+
+	//get all it role names and its member names and write to transactional DB
+	private void setIdBundleInfoToTransDB(){
+		logger.debug("In Method setIdBundleInfoToTransDB");
+		Connection conn = getDBConnection();
+		conn.setAutoCommit(false); // Disable auto-commit to allow multiple statements
+		try{
+			logger.debug("Fetching role members");
+			Statement stmt = conn.createStatement();
+			stmt.addBatch("delete from NON_NERC_CUSTOM_TransactionDB.exelon_user"); //clearing everything
+			QueryOptions qo = new QueryOptions();
+			qo.addFilter(Filter.and(Filter.or(Filter.notnull("bundleSummary"),Filter.notnull("assignedRoleSummary")),Filter.notnull("employeeId")));
+			Iterator itr = context.search(Identity.class,qo);
+			while(itr.hasNext()){
+
+				Identity id = itr.next();
+				String employee_id = id.getName();				
+				List role_name_list = new ArrayList();
+				if(id.getDetectedRoles()!=null){
+					for(Bundle bundle:id.getDetectedRoles()){
+						String role_name = bundle.getName();
+						role_name_list.add(role_name);						
+					}
+					
+				}
+				if(id.getAssignedRoles()!=null){
+					for(Bundle bundle:id.getAssignedRoles()){
+						if(bundle.getType().equals("it")){
+							String role_name = bundle.getName();
+							role_name_list.add(role_name);	
+						}						
+					}
+				}
+				logger.debug("employee_id : "+employee_id+" , role_name_list :"+role_name_list);
+	
+				stmt.addBatch( "INSERT INTO NON_NERC_CUSTOM_TransactionDB.exelon_user (employee_id,role_name) values ('"+employee_id+"', '"+Util.listToCsv(role_name_list)+"')");// Add each statement to the batch
+			}
+			Util.flushIterator(itr);
+			logger.debug("Execute the batch of statements");
+			stmt.executeBatch(); // Execute the batch of statements
+			conn.commit(); // Commit the transaction
+
+		} catch (SQLException e) {
+			conn.rollback(); // Rollback the transaction on error
+			logger.error("Issue while writing role names and member names to transaction DB"+e);
+			e.printStackTrace();
+		}
+
+	}
