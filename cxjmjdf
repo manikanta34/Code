@@ -1,0 +1,98 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            // Specify the URL of the web service
+            URL url = new URL("http://example.com/api/resource");
+
+            // Open a connection to the URL
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+
+            // Get the response code
+            int responseCode = connection.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+
+            // Read the response
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String inputLine;
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            // Parse the JSON response to get posdescr values
+            List<String> posdescrList = parseJsonResponse(response.toString());
+
+            // Now you can work with the list of posdescr values
+            for (String posdescr : posdescrList) {
+                System.out.println(posdescr);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static List<String> parseJsonResponse(String jsonResponse) {
+        List<String> posdescrList = new ArrayList<>();
+
+        // Parse JSON response
+        JSONObject jsonObject = new JSONObject(jsonResponse);
+        JSONArray jsonArray = jsonObject.getJSONArray("icampositionrecords");
+        
+        // Iterate through JSON array
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject item = jsonArray.getJSONObject(i);
+            String posdescr = item.getString("posdescr");
+            
+            // Add posdescr to the list
+            posdescrList.add(posdescr);
+        }
+
+        return posdescrList;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // Simulated JSON response string
+        String jsonResponse = "{\"icampositionrecords\": [{\"posabbrev\": \"AEMADM\", \"posdescr\": \"EXPERT ASL TEAM ADMIN\"}, {\"posabbrev\": \"ASLADM\", \"posdescr\": \"EXPERT ASL TEAM ADMIN\"}, {\"posabbrev\": \"ASLATF\", \"posdescr\": \"AVN SPO ACCESS ADMIN\"}, {\"posabbrev\": \"AEMMGR\", \"posdescr\": \"AVN SPO MANAGER\"}, {\"posabbrev\": \"ATFADM\", \"posdescr\": \"ATF SENIOR MGR\"}, {\"posabbrev\": \"AVNADM\", \"posdescr\": \"AVN MAINTENANCE ACCESS ADMINISTRATOR\"}, {\"posabbrev\": \"AVNMGR\", \"posdescr\": \"AVN DMA MWO COORDINATOR\"}, {\"posabbrev\": \"AVNDSO\", \"posdescr\": \"AVN DMA SAFETY OFFICER\"}, {\"posabbrev\": \"AVNQAC\", \"posdescr\": \"AVN TECH SUPPLY MANAGER\"}, {\"posabbrev\": \"AVNMNT\", \"posdescr\": \"AVN TECH SUPPLY ADMIN\"}]}";
+
+        // Parse the JSON response to get posdescr values
+        List<String> posdescrList = parseJsonResponse(jsonResponse);
+
+        // Now you can work with the list of posdescr values
+        for (String posdescr : posdescrList) {
+            System.out.println(posdescr);
+        }
+    }
+
+    private static List<String> parseJsonResponse(String jsonResponse) {
+        List<String> posdescrList = new ArrayList<>();
+
+        // Parse JSON response
+        JSONObject jsonObject = new JSONObject(jsonResponse);
+        JSONArray jsonArray = jsonObject.getJSONArray("icampositionrecords");
+        
+        // Iterate through JSON array
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject item = jsonArray.getJSONObject(i);
+            String posdescr = item.getString("posdescr");
+            
+            // Add posdescr to the list
+            posdescrList.add(posdescr);
+        }
+
+        return posdescrList;
+    }
+}
