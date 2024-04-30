@@ -1,0 +1,115 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule created="1714449972101" id="0a6b8a778e78180d818f2d2e7b85382c" language="beanshell" modified="1714450308940" name="Rule-Get-PosdescrList" type="AllowedValues">
+  <Signature returnType="Object">
+    <Inputs>
+      <Argument name="log" type="org.apache.commons.logging.Log">
+        <Description>
+          The log object associated with the SailPointContext.
+        </Description>
+      </Argument>
+      <Argument name="context" type="sailpoint.api.SailPointContext">
+        <Description>
+          A sailpoint.api.SailPointContext object that can be used to query the database if necessary.
+        </Description>
+      </Argument>
+      <Argument name="identity">
+        <Description>
+          The Identity object being provisioned.
+        </Description>
+      </Argument>
+      <Argument name="form">
+        <Description>
+          The Form object for the provisioning plan.
+        </Description>
+      </Argument>
+      <Argument name="field">
+        <Description>
+          The Field object being analyzed.
+        </Description>
+      </Argument>
+    </Inputs>
+    <Returns>
+      <Argument name="value">
+        <Description>
+          An Object (possibly a Collection) of the allowed values for the given
+          field.
+        </Description>
+      </Argument>
+    </Returns>
+  </Signature>
+  <Source>
+  import org.apache.log4j.Logger;
+  import org.apache.log4j.Level;
+  import sailpoint.object.*;
+  import sailpoint.tools.*;
+
+  import org.apache.log4j.Logger;
+  import org.apache.log4j.Level;
+
+  import java.util.*;
+
+  import java.io.BufferedReader;
+  import java.io.InputStreamReader;
+  import java.net.HttpURLConnection;
+  import java.net.URL;
+
+  import org.json.JSONArray;
+  import org.json.JSONObject;
+
+  Logger log = Logger.getLogger("com.Rule.Get-PosdescrList");
+
+
+  private List parseJsonResponse(String jsonResponse) {
+
+    List posdescrList = new ArrayList();
+    JSONObject jsonObject = new JSONObject(jsonResponse);
+    JSONArray jsonArray = jsonObject.getJSONArray("icampositionrecords");
+
+    for (int i = 0; i &lt; jsonArray.length(); i++) {
+      JSONObject item = jsonArray.getJSONObject(i);
+      String posdescr = item.getString("posdescr");
+      posdescrList.add(posdescr);
+    }
+
+    return posdescrList;
+  }
+
+
+  /* ******************FOR TESTING WITH SAMPLE JSON DATA*****************************
+
+        String jsonResponse = "{\"icampositionrecords\": [{\"posabbrev\": \"AEMADM\", \"posdescr\": \"EXPERT ASL TEAM ADMIN\"}, {\"posabbrev\": \"ASLADM\", \"posdescr\": \"EXPERT ASL TEAM ADMIN\"}, {\"posabbrev\": \"ASLATF\", \"posdescr\": \"AVN SPO ACCESS ADMIN\"}, {\"posabbrev\": \"AEMMGR\", \"posdescr\": \"AVN SPO MANAGER\"}, {\"posabbrev\": \"ATFADM\", \"posdescr\": \"ATF SENIOR MGR\"}, {\"posabbrev\": \"AVNADM\", \"posdescr\": \"AVN MAINTENANCE ACCESS ADMINISTRATOR\"}, {\"posabbrev\": \"AVNMGR\", \"posdescr\": \"AVN DMA MWO COORDINATOR\"}, {\"posabbrev\": \"AVNDSO\", \"posdescr\": \"AVN DMA SAFETY OFFICER\"}, {\"posabbrev\": \"AVNQAC\", \"posdescr\": \"AVN TECH SUPPLY MANAGER\"}, {\"posabbrev\": \"AVNMNT\", \"posdescr\": \"AVN TECH SUPPLY ADMIN\"}]}";
+
+        List posdescrList = parseJsonResponse(jsonResponse);
+
+        return posdescrList;
+
+**********/
+
+  try {
+    URL url = new URL("https://www.gogcss-armyqa.army.mil/icam/positionlist");
+
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setRequestMethod("GET");
+
+    int responseCode = connection.getResponseCode();
+
+    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    StringBuilder response = new StringBuilder();
+    String inputLine;
+
+    while ((inputLine = in.readLine()) != null) {
+      response.append(inputLine);
+    }
+    in.close();
+
+    posdescrList = parseJsonResponse(response.toString());
+
+  } catch (Exception e) {
+    e.printStackTrace();
+  }
+
+  return posdescrList;
+
+  </Source>
+</Rule>
