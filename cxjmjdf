@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
+https://www.gogcss-armyqa.army.mil/icam/positionlist
 public class Main {
     public static void main(String[] args) {
         try {
